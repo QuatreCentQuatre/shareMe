@@ -1,6 +1,10 @@
 /*
  * ShareMe from the MeLibs
  * Library that let you easily share your page on medias
+ *
+ * Version :
+ *  - 1.0.2
+ *
  * Supported Medias :
  *  - Facebook
  *  - Twitter
@@ -8,26 +12,31 @@
  *  - Pinterest
  *
  * Dependencies :
- *  - Jquery
- *  - TrackMe (if you want autotracking)
- *
- * Private Methods :
+ *  - jQuery (https://jquery.com/)
+ *  - TrackMe, if you want autotracking (https://github.com/QuatreCentQuatre/trackMe)
  *
  * Public Methods :
+ *  - setOptions
+ *  - getOptions
+ *  - openBlank
+ *  - openSocial
  *
+ * Private Methods :
+ *  -
  */
 
 (function($, window, document, undefined) {
 	"use strict";
+
 	/* Private Variables */
-	var instanceID   = 1;
-	var instanceName = "ShareMe";
-	var defaults     = {
+	var instanceID      = 1;
+	var instanceName    = "ShareMe";
+	var defaults        = {
 		debug: false,
 		lang: 'fr',
 		autoTrack: true
 	};
-	var overwriteKeys = [
+	var overwriteKeys   = [
 		'debug',
 		'lang',
 		'autoTrack'
@@ -40,27 +49,29 @@
 	var ShareMe = function(options) {
 		this.__construct(options);
 	};
+
 	var proto = ShareMe.prototype;
 
-	proto.debug          = null;
-	proto.id             = null;
-	proto.name           = null;
-	proto.dname          = null;
-	proto.options        = null;
+    /* Private Variables */
+    proto.__id          = null;
+    proto.__name        = null;
+    proto.__debugName   = null;
 
-	/* Publics Variables */
-	proto.lang           = null;
-	proto.autoTrack      = null;
+    /* Publics Variables */
+    proto.debug         = null;
+	proto.lang          = null;
+	proto.autoTrack     = null;
+    proto.options       = null;
 	proto.newWinDefaults = {
-		location:0,     // determines whether the address bar is displayed {1 (YES) or 0 (NO)}.
-		menubar:0,      // determines whether the menu bar is displayed {1 (YES) or 0 (NO)}.
-		resizable:1,    // whether the window can be resized {1 (YES) or 0 (NO)}. Can also be overloaded using resizable.
-		scrollbars:1,   // determines whether scrollbars appear on the window {1 (YES) or 0 (NO)}.
-		status:0,       // whether a status line appears at the bottom of the window {1 (YES) or 0 (NO)}.
-		width:1024,     // sets the width in pixels of the window.
-		height:768,     // sets the height in pixels of the window.
-		windowURL:null, // url used for the popup
-		toolbar:0       // determines whether a toolbar (includes the forward and back buttons) is displayed {1 (YES) or 0 (NO)}.
+		location: 0,     // determines whether the address bar is displayed {1 (YES) or 0 (NO)}.
+		menubar: 0,      // determines whether the menu bar is displayed {1 (YES) or 0 (NO)}.
+		resizable: 1,    // whether the window can be resized {1 (YES) or 0 (NO)}. Can also be overloaded using resizable.
+		scrollbars: 1,   // determines whether scrollbars appear on the window {1 (YES) or 0 (NO)}.
+		status: 0,       // whether a status line appears at the bottom of the window {1 (YES) or 0 (NO)}.
+		width: 1024,     // sets the width in pixels of the window.
+		height: 768,     // sets the height in pixels of the window.
+		windowURL: null, // url used for the popup
+		toolbar: 0       // determines whether a toolbar (includes the forward and back buttons) is displayed {1 (YES) or 0 (NO)}.
 	};
 	proto.translations = {
 		share: {
@@ -79,16 +90,18 @@
 	 * @access  private
 	 */
 	proto.__construct = function(options) {
-		this.id    = instanceID;
-		this.name  = instanceName;
-		this.dname = this.name + ":: ";
+        this.__id        = instanceID;
+        this.__name      = instanceName;
+        this.__debugName = this.__name + " :: ";
+
 		this.setOptions(options);
 
 		if (!this.__validateDependencies()) {return null;}
 		if (!this.__validateOptions()) {return null;}
-		instanceID ++;
 
+		instanceID ++;
 		this.__initialize();
+
 		return this;
 	};
 
@@ -103,10 +116,17 @@
 	 */
 	proto.__validateDependencies = function() {
 		var isValid = true;
+
 		if (!window.jQuery) {
 			isValid = false;
-			console.warn(this.dname + "You need jquery");
+            if (this.debug) {console.warn(this.__debugName + "required jQuery (https://jquery.com/)");}
 		}
+
+        if(this.autoTrack && !Me.track) {
+            isValid = false;
+            if (this.debug) {console.warn(this.__debugName + "required TrackMe (https://github.com/QuatreCentQuatre/trackMe)");}
+        }
+
 		return isValid;
 	};
 
@@ -121,11 +141,33 @@
 	 */
 	proto.__validateOptions = function() {
 		var isValid = true;
-		if (isValid && this.autoTrack && (!window.Me || !Me.track)) {
-			console.warn(this.dname + "if you want autotracking enabled you need trackMe (https://github.com/QuatreCentQuatre/trackMe/)");
-		}
-		return isValid;
+
+        return isValid;
 	};
+
+    /**
+     *
+     * __initialize
+     * set the basics
+     * By default you can add me:share:external on a link to open it in a blank window
+     *
+     * @return  object scope
+     * @access  private
+     *
+     */
+    proto.__initialize = function() {
+        var scope = this;
+
+        $(document).ready(function() {
+            $('body').on('click', 'a[me\\:share\\:external]', function(e) {
+                e.preventDefault();
+
+                var $el = $(e.currentTarget);
+
+                scope.openBlank($el.attr('href'));
+            });
+        });
+    };
 
 	/**
 	 *
@@ -137,18 +179,21 @@
 	 * @access  public
 	 *
 	 */
-	proto.setOptions = function(options) {
-		var $scope = this;
-		var settings = $.extend({}, defaults, options);
-		$.each(settings, function(index, value) {
-			if ($.inArray(index, overwriteKeys) != -1) {
-				$scope[index] = value;
-				delete settings[index];
-			}
-		});
-		this.options = settings;
-		return this;
-	};
+    proto.setOptions = function(options) {
+        var scope    = this;
+        var settings = (this.options) ? $.extend({}, this.options, options) : $.extend({}, defaults, options);
+
+        $.each(settings, function(index, value) {
+            if ($.inArray(index, overwriteKeys) != -1) {
+                scope[index] = value;
+                delete settings[index];
+            }
+        });
+
+        this.options = settings;
+
+        return this;
+    };
 
 	/**
 	 *
@@ -163,31 +208,17 @@
 		return this.options;
 	};
 
-
-	/**
-	 *
-	 * __initialize
-	 * set the basics
-	 * By default you can add me:share:external on a link to open it in a blank window
-	 *
-	 * @return  object scope
-	 * @access  private
-	 *
-	 */
-	proto.__initialize = function() {
-		var $scope = this;
-		$(document).ready(function() {
-			$('body').on('click', 'a[me\\:share\\:external]', function(e) {
-				e.preventDefault();
-				var $el = $(e.currentTarget);
-				$scope.openBlank($el.attr('href'));
-			});
-		});
-	};
-
+    /**
+     *
+     * openBlank
+     *
+     * @access  public
+     *
+     */
 	proto.openBlank = function(url, windSettings) {
 		var windowOptions = $.extend({}, this.newWinDefaults, windSettings);
 		windowOptions.windowURL = url;
+
 		this.popupProps  = 'height=' + windowOptions.height;
 		this.popupProps += ',width=' + windowOptions.width;
 		this.popupProps += ',toolbar=' + windowOptions.toolbar;
@@ -197,12 +228,21 @@
 		this.popupProps += ',location=' + windowOptions.location;
 		this.popupProps += ',menuBar=' + windowOptions.menubar;
 		this.popupProps += ',alwaysRaised=yes';
+
 		var centeredY = (screen.availHeight - windowOptions.height) / 2;
 		var centeredX = (screen.availWidth - windowOptions.width) / 2;
 		var w = window.open(windowOptions.windowURL, "_blank", this.popupProps + ',left=' + centeredX + ',top=' + centeredY);
+
 		w.focus();
 	};
 
+    /**
+     *
+     * openSocial
+     *
+     * @access  public
+     *
+     */
 	proto.openSocial = function(network, params, windowOptions) {
 		var defaults = {
 			url: null,
@@ -211,9 +251,12 @@
 			t_text: null,
 			media: null
 		};
+
 		params = $.extend({}, defaults, params || {});
+
 		var shareTerm = (this.translations.share[this.options.lang]) ? this.translations.share[this.options.lang] : this.translations.share["en"];
 		var windowUrl = null;
+
 		switch(network) {
 			case 'facebook':
 				windowUrl = "//www.facebook.com/sharer.php?u=" + params.url;
@@ -231,21 +274,24 @@
 				windowUrl += '&description=' + encodeURIComponent(params.text);
 				break;
 			default:
-				console.warn("Channel doesn't exist ::", network);
+				if (this.debug) {console.warn(this.__debugName + "channel doesn't exist ::", network);}
 				break;
 		}
-		if (!windowUrl){return;}
 
-		if(this.options.autoTrack && Me.track) {Me.track.social(network, shareTerm, params.url);}
+		if (!windowUrl) {return;}
+
+		if(this.options.autoTrack) {Me.track.social(network, shareTerm, params.url);}
+
 		this.openBlank(windowUrl, windowOptions);
 	};
 
 	proto.toString = function(){
-		return "[" + this.name + "]";
+		return "[" + this.__name + "]";
 	};
 
-	/* Create Me reference if does'nt exist */
-	if(!window.Me){window.Me = {};}
-	/* Initiate to make a Singleton */
-	window.Me.share = new ShareMe();
+    /* Create Me reference if does'nt exist */
+    if (!window.Me) {window.Me = {};}
+
+	/*  */
+	Me.share = new ShareMe();
 }(jQuery, window, document));
