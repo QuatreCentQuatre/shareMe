@@ -12,7 +12,7 @@
  *  - Pinterest
  *
  * Dependencies :
- *  - jQuery (https://jquery.com/)
+ *  - jQuery (http://jquery.com/download/)
  *  - TrackMe, if you want autotracking (https://github.com/QuatreCentQuatre/trackMe)
  *
  * Public Methods :
@@ -22,6 +22,9 @@
  *  - openSocial
  *
  * Private Methods :
+ *  -
+ *
+ * Updates Needed :
  *  -
  */
 
@@ -97,7 +100,7 @@
 		this.setOptions(options);
 
 		if (!this.__validateDependencies()) {return null;}
-		if (!this.__validateOptions()) {return null;}
+		if (!this.__validateArguments()) {return null;}
 
 		instanceID ++;
 		this.__initialize();
@@ -119,7 +122,7 @@
 
 		if (!window.jQuery) {
 			isValid = false;
-            if (this.debug) {console.warn(this.__debugName + "required jQuery (https://jquery.com/)");}
+            if (this.debug) {console.warn(this.__debugName + "required jQuery (http://jquery.com/download/)");}
 		}
 
         if(this.autoTrack && !Me.track) {
@@ -132,14 +135,14 @@
 
 	/**
 	 *
-	 * __validateOptions
+	 * __validateArguments
 	 * Will check if you got all the required options needed to use that plugins
 	 *
 	 * @return  boolean
 	 * @access  private
 	 *
 	 */
-	proto.__validateOptions = function() {
+	proto.__validateArguments = function() {
 		var isValid = true;
 
         return isValid;
