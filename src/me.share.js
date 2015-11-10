@@ -257,7 +257,7 @@
 
 		params = $.extend({}, defaults, params || {});
 
-		var shareTerm = (this.translations.share[this.options.lang]) ? this.translations.share[this.options.lang] : this.translations.share["en"];
+		var shareTerm = (this.translations.share[this.lang]) ? this.translations.share[this.lang] : this.translations.share["en"];
 		var windowUrl = null;
 
 		switch(network) {
@@ -283,7 +283,7 @@
 
 		if (!windowUrl) {return;}
 
-		if(this.options.autoTrack) {Me.track.social(network, shareTerm, params.url);}
+		if(this.autoTrack) {Me.track.social(network, shareTerm, params.url);}
 
 		this.openBlank(windowUrl, windowOptions);
 	};
