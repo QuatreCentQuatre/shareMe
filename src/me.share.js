@@ -283,7 +283,10 @@
 
 		if (!windowUrl) {return;}
 
-		if(this.autoTrack) {Me.track.social(network, shareTerm, params.url);}
+		if(this.autoTrack) {
+			var trackUrl = (params.t_url) ? params.t_url : params.url;
+			Me.track.social(network, shareTerm, trackUrl);
+		}
 
 		this.openBlank(windowUrl, windowOptions);
 	};
